@@ -11,6 +11,17 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 define('YCU_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('YCU_PLUGIN_URL', plugin_dir_url(__FILE__));
 
+require_once __DIR__ . '/plugin-update-checker/plugin-update-checker.php';
+use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
+
+$myUpdateChecker = PucFactory::buildUpdateChecker(
+    'https://github.com/sou0/juniors-csv-update/',
+    __FILE__,
+    'juniors-csv-update'
+);
+$myUpdateChecker->setBranch('main');
+$myUpdateChecker->setAuthentication('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');
+
 // Hooks do Menu
 add_action('admin_menu', 'ycu_admin_menu');
 add_action('admin_enqueue_scripts', 'ycu_admin_scripts');
