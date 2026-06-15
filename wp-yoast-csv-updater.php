@@ -20,7 +20,6 @@ $myUpdateChecker = PucFactory::buildUpdateChecker(
     'juniors-csv-update'
 );
 $myUpdateChecker->setBranch('main');
-$myUpdateChecker->setAuthentication('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');
 
 // Hooks do Menu
 add_action('admin_menu', 'ycu_admin_menu');
