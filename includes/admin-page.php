@@ -1,5 +1,5 @@
 <div class="wrap ycu-wrap">
-    <h1>SEO & Meta CSV Updater</h1>
+    <h1>Junior's SEO & Meta CSV Updater</h1>
     
     <h2 class="nav-tab-wrapper ycu-tabs">
         <a href="#tab-import" class="nav-tab nav-tab-active" data-tab="import">Importação / Mapeamento</a>
@@ -160,7 +160,7 @@
         <div class="ycu-panel">
             <h2>Guia Rápido e Serviços Disponíveis</h2>
             
-            <p>O <strong>SEO & Meta CSV Updater</strong> permite que você atualize dados em massa divididos em três serviços principais. Abaixo, confira o que cada serviço permite mapear e alterar através da sua planilha CSV:</p>
+            <p>O <strong>Junior's SEO & Meta CSV Updater</strong> permite que você atualize dados em massa divididos em três serviços principais. Abaixo, confira o que cada serviço permite mapear e alterar através da sua planilha CSV:</p>
 
             <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px;">
                 <!-- Posts/Pages -->

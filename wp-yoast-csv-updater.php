@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: SEO & Meta CSV Updater
+ * Plugin Name: Junior's SEO & Meta CSV Updater
  * Description: Plugin para atualizar em massa Titles, Descriptions (Yoast/Rank Math), Campos ACF, Alt de Imagens, Categorias e Slugs via upload de arquivo CSV com mapeamento de colunas. Conta com interface de terminal para logs e exportação.
  * Version: 2.0.0
  * Author: junior
@@ -17,8 +17,8 @@ add_action('admin_enqueue_scripts', 'ycu_admin_scripts');
 
 function ycu_admin_menu() {
     add_menu_page(
-        'SEO & Meta CSV',
-        'SEO & Meta CSV',
+        "Junior's SEO & Meta CSV",
+        "Junior's SEO & Meta CSV",
         'manage_options',
         'yoast-csv-updater',
         'ycu_admin_page',
