@@ -41,7 +41,7 @@ function ycu_upload_csv_handler() {
     wp_send_json_success(array('rows' => $data, 'headers' => $headers, 'total' => count($data)));
 }
 
-function ycu_find_object($identifier) {
+function ycu_find_object($identifier, $service_type = '') {
     global $wpdb;
     $identifier = trim($identifier);
 
@@ -49,11 +49,19 @@ function ycu_find_object($identifier) {
 
     // Check if numeric (ID)
     if (is_numeric($identifier)) {
-        $post = get_post($identifier);
-        if ($post) return array('type' => 'post', 'id' => $post->ID, 'post_type' => $post->post_type);
-        
-        $term = get_term($identifier);
-        if ($term && !is_wp_error($term)) return array('type' => 'term', 'id' => $term->term_id);
+        if ($service_type === 'terms') {
+            $term = get_term($identifier);
+            if ($term && !is_wp_error($term)) return array('type' => 'term', 'id' => $term->term_id);
+            
+            $post = get_post($identifier);
+            if ($post) return array('type' => 'post', 'id' => $post->ID, 'post_type' => $post->post_type);
+        } else {
+            $post = get_post($identifier);
+            if ($post) return array('type' => 'post', 'id' => $post->ID, 'post_type' => $post->post_type);
+
+            $term = get_term($identifier);
+            if ($term && !is_wp_error($term)) return array('type' => 'term', 'id' => $term->term_id);
+        }
     }
 
     $home_url = rtrim(home_url(), '/');
@@ -73,35 +81,75 @@ function ycu_find_object($identifier) {
     // Try finding by URL
     if ($is_url) {
         $post_id = url_to_postid($identifier);
+        
+        // If not found, try attachment_url_to_postid
+        if (!$post_id && function_exists('attachment_url_to_postid')) {
+            $post_id = attachment_url_to_postid($identifier);
+        }
+
         if ($post_id) return array('type' => 'post', 'id' => $post_id, 'post_type' => get_post_type($post_id));
     }
 
-    // Parse slug
+    // Parse slug variants
     $parsed_url = parse_url((strpos($identifier, 'http') === false ? 'http://' : '') . $identifier);
     $path = isset($parsed_url['path']) ? trim($parsed_url['path'], '/') : '';
     if (empty($path)) {
         $path = trim($identifier, '/');
     }
-    $slug = basename($path);
+    
+    $full_filename = basename($path);
+    $slug_only = pathinfo($full_filename, PATHINFO_FILENAME);
+    $slug_from_path = basename($path);
 
-    // Search by slug in posts (including attachments)
-    $post = $wpdb->get_row($wpdb->prepare(
-        "SELECT ID, post_type FROM $wpdb->posts WHERE post_name = %s AND post_status IN ('publish', 'draft', 'pending', 'private', 'inherit') AND post_type NOT IN ('revision', 'nav_menu_item') LIMIT 1",
-        $slug
+    $slug_variants = array_unique(array(
+        $slug_only,
+        strtolower($slug_only),
+        $slug_from_path,
+        strtolower($slug_from_path),
+        sanitize_title($slug_only),
+        sanitize_title($full_filename)
     ));
 
-    if ($post) {
-        return array('type' => 'post', 'id' => $post->ID, 'post_type' => $post->post_type);
+    // SEARCH LOGIC START
+    
+    // 1. If terms service, try terms first (Slug or Name)
+    if ($service_type === 'terms') {
+        // Try by Slug
+        $where_parts = array();
+        foreach ($slug_variants as $variant) { $where_parts[] = $wpdb->prepare("slug = %s", $variant); }
+        $term = $wpdb->get_row("SELECT term_id FROM $wpdb->terms WHERE " . implode(" OR ", $where_parts) . " LIMIT 1");
+        if ($term) return array('type' => 'term', 'id' => $term->term_id);
+
+        // Try by Name
+        $term_by_name = $wpdb->get_row($wpdb->prepare("SELECT term_id FROM $wpdb->terms WHERE name = %s LIMIT 1", $identifier));
+        if ($term_by_name) return array('type' => 'term', 'id' => $term_by_name->term_id);
     }
 
-    // Try finding term
-    $term = $wpdb->get_row($wpdb->prepare(
-        "SELECT term_id FROM $wpdb->terms WHERE slug = %s LIMIT 1",
-        $slug
-    ));
+    // 2. Try Posts (Slug)
+    $where_parts = array();
+    foreach ($slug_variants as $variant) { $where_parts[] = $wpdb->prepare("post_name = %s", $variant); }
+    $post = $wpdb->get_row("SELECT ID, post_type FROM $wpdb->posts WHERE (" . implode(" OR ", $where_parts) . ") AND post_status IN ('publish', 'draft', 'pending', 'private', 'inherit') AND post_type NOT IN ('revision', 'nav_menu_item') LIMIT 1");
+    if ($post) return array('type' => 'post', 'id' => $post->ID, 'post_type' => $post->post_type);
 
-    if ($term) {
-        return array('type' => 'term', 'id' => $term->term_id);
+    // 3. Try Post (Title)
+    $post_by_title = $wpdb->get_row($wpdb->prepare("SELECT ID, post_type FROM $wpdb->posts WHERE post_title = %s AND post_status IN ('publish', 'draft', 'pending', 'private', 'inherit') AND post_type NOT IN ('revision', 'nav_menu_item') LIMIT 1", $identifier));
+    if ($post_by_title) return array('type' => 'post', 'id' => $post_by_title->ID, 'post_type' => $post_by_title->post_type);
+
+    // 4. Try Media (Filename in Meta)
+    if (preg_match('/\.(jpg|jpeg|png|gif|webp|pdf|svg)$/i', $full_filename)) {
+        $attachment_id = $wpdb->get_var($wpdb->prepare("SELECT post_id FROM $wpdb->postmeta WHERE meta_key = '_wp_attached_file' AND meta_value LIKE %s LIMIT 1", '%' . $wpdb->esc_like($full_filename)));
+        if ($attachment_id) return array('type' => 'post', 'id' => $attachment_id, 'post_type' => 'attachment');
+    }
+
+    // 5. Try Terms (Slug or Name) - if not already done in step 1
+    if ($service_type !== 'terms') {
+        $where_parts = array();
+        foreach ($slug_variants as $variant) { $where_parts[] = $wpdb->prepare("slug = %s", $variant); }
+        $term = $wpdb->get_row("SELECT term_id FROM $wpdb->terms WHERE " . implode(" OR ", $where_parts) . " LIMIT 1");
+        if ($term) return array('type' => 'term', 'id' => $term->term_id);
+
+        $term_by_name = $wpdb->get_row($wpdb->prepare("SELECT term_id FROM $wpdb->terms WHERE name = %s LIMIT 1", $identifier));
+        if ($term_by_name) return array('type' => 'term', 'id' => $term_by_name->term_id);
     }
 
     return false;
@@ -263,6 +311,7 @@ function ycu_process_row_handler() {
     $row = isset($_POST['row']) ? $_POST['row'] : array();
     $mapping = isset($_POST['mapping']) ? $_POST['mapping'] : array();
     $seo_plugin = isset($_POST['seo_plugin']) ? $_POST['seo_plugin'] : 'both';
+    $service_type = isset($_POST['service_type']) ? sanitize_text_field($_POST['service_type']) : '';
     $batch_id = isset($_POST['batch_id']) ? sanitize_text_field($_POST['batch_id']) : '';
 
     // Find Identifier
@@ -278,7 +327,7 @@ function ycu_process_row_handler() {
         wp_send_json_error('Identificador vazio na linha.');
     }
 
-    $obj = ycu_find_object($identifier_val);
+    $obj = ycu_find_object($identifier_val, $service_type);
 
     if (!$obj) {
         wp_send_json_error('Item não encontrado para o identificador: ' . $identifier_val);

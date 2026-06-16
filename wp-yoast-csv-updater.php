@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Junior's SEO & Meta CSV Updater
  * Description: Plugin para atualizar em massa Titles, Descriptions (Yoast/Rank Math), Campos ACF, Alt de Imagens, Categorias e Slugs via upload de arquivo CSV com mapeamento de colunas. Conta com interface de terminal para logs e exportação.
- * Version: 2.0.0
+ * Version: 2.0.1
  * Author: junior
  */
 
