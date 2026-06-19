@@ -958,6 +958,30 @@ function ycu_process_row_handler() {
         
         if (!$is_term) {
             $post_id = $obj_id;
+            
+            // Sincroniza post_title com alterações de H1
+            $old_post_title = get_post_field('post_title', $post_id);
+            $new_post_title = $old_post_title;
+            
+            if (isset($content_ops['h1_force_replace'])) {
+                $new_post_title = $content_ops['h1_force_replace'];
+            } else {
+                if (isset($content_ops['h1_replaces'])) {
+                    foreach ($content_ops['h1_replaces'] as $rep) {
+                        $new_post_title = str_replace($rep['old'], $rep['new'], $new_post_title);
+                    }
+                }
+                if (isset($content_ops['h1_order']) && isset($content_ops['h1_order'][1])) {
+                    $new_post_title = wp_kses_post($content_ops['h1_order'][1]);
+                }
+            }
+            
+            if ($new_post_title !== $old_post_title) {
+                ycu_save_log($batch_id, 'post', $post_id, 'post_title', $old_post_title, $new_post_title);
+                wp_update_post(array('ID' => $post_id, 'post_title' => sanitize_text_field($new_post_title)));
+                $updated[] = 'Título do Post (Sincronizado com H1)';
+            }
+
             $elementor_data = get_post_meta($post_id, '_elementor_data', true);
             if (!empty($elementor_data)) {
                 $data = json_decode($elementor_data, true);
