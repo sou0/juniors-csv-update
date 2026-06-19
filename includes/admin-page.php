@@ -45,10 +45,11 @@
                 <!-- Step 2: Upload -->
                 <div class="ycu-panel" id="ycu-step-upload" style="display: none;">
                     <h2>2. Upload do Arquivo CSV</h2>
-                    <p class="ycu-help">
-                        Serviço Selecionado: <strong id="ycu-selected-service-label"></strong>. <a href="#" id="ycu-btn-change-service">Alterar</a><br>
-                        Faça o upload do seu CSV. Na próxima etapa, você mapeará as colunas.
-                    </p>
+                    <div style="margin-bottom: 15px; padding: 10px; background: #e0f0fa; border-left: 4px solid #2271b1; display: flex; align-items: center; gap: 15px;">
+                        <div><strong>Serviço Selecionado:</strong> <span class="ycu-selected-service-label"></span></div>
+                        <button type="button" class="button button-small ycu-btn-change-service">Voltar aos Serviços</button>
+                    </div>
+                    <p class="ycu-help">Faça o upload do seu CSV. Na próxima etapa, você mapeará as colunas.</p>
                     <form id="ycu-upload-form" enctype="multipart/form-data">
                         <input type="file" id="ycu-csv-file" name="ycu-csv-file" accept=".csv" required>
                         <div class="ycu-actions">
@@ -119,7 +120,10 @@
                 <!-- Step 3: Mapping -->
                 <div class="ycu-panel ycu-mapping-panel" id="ycu-step-mapping" style="display: none;">
                     <h2>3. Mapeamento de Colunas</h2>
-                    <p class="ycu-help">Você deve definir <strong>uma coluna</strong> como <strong>Identificador (Referência)</strong> (ex: URL ou ID). As opções abaixo foram filtradas para o serviço escolhido.</p>
+                    <div style="margin-bottom: 15px; padding: 10px; background: #e0f0fa; border-left: 4px solid #2271b1;">
+                        <strong>Serviço Atual:</strong> <span class="ycu-selected-service-label"></span>
+                    </div>
+                    <p class="ycu-help">Você deve definir <strong>uma coluna</strong> como <strong>Identificador (Referência)</strong> (ex: id ou url). As opções abaixo foram filtradas para o serviço escolhido.</p>
                     
                     <div class="ycu-mapping-settings" id="ycu-seo-settings-container">
                         <label>
@@ -244,7 +248,7 @@
                 <!-- Posts/Pages -->
                 <div style="flex: 1; min-width: 300px; background: #fff; border: 1px solid #ccd0d4; padding: 15px; border-radius: 4px;">
                     <h3><span class="dashicons dashicons-admin-post"></span> Posts, Páginas e CPTs</h3>
-                    <p><em>Identificador: URL, Slug ou ID. (A coluna <code>title</code> também pode servir como identificador).</em></p>
+                    <p><strong>Identificadores suportados:</strong> id, url, slug, identificador, site, title, post_title</p>
                     <ul style="list-style-type: disc; margin-left: 20px;">
                         <li><strong>SEO Title:</strong> <code>seo_title</code>, <code>title</code></li>
                         <li><strong>SEO Description:</strong> <code>seo_desc</code>, <code>description</code></li>
@@ -259,7 +263,7 @@
                 <!-- Conteúdo -->
                 <div style="flex: 1; min-width: 300px; background: #fff; border: 1px solid #ccd0d4; padding: 15px; border-radius: 4px;">
                     <h3><span class="dashicons dashicons-editor-paste-text"></span> Conteúdo (Páginas e Posts)</h3>
-                    <p><em>Identificador: URL, Slug ou ID.</em></p>
+                    <p><strong>Identificadores suportados:</strong> id, url, slug, identificador, site, title, post_title</p>
                     <ul style="list-style-type: disc; margin-left: 20px;">
                         <li><strong>Substituição Global de Conteúdo:</strong> <code>post_content_original</code> + <code>post_content_update</code></li>
                         <li><strong><code>allheading_original</code> e <code>allheading_update</code>:</strong> Substitui textos em todos os subtítulos (H2 a H6) da página de uma vez.</li>
@@ -272,7 +276,7 @@
                 <!-- Media -->
                 <div style="flex: 1; min-width: 300px; background: #fff; border: 1px solid #ccd0d4; padding: 15px; border-radius: 4px;">
                     <h3><span class="dashicons dashicons-admin-media"></span> Mídias e Imagens</h3>
-                    <p><em>Identificador: URL da imagem ou ID.</em></p>
+                    <p><strong>Identificadores suportados:</strong> id, url, slug, identificador, site, title, media_title</p>
                     <ul style="list-style-type: disc; margin-left: 20px;">
                         <li><strong>Alt Text:</strong> <code>alt_text</code>, <code>alt</code></li>
                         <li><strong>Alterar Título da Mídia:</strong> <code>media_title_update</code></li>
@@ -285,7 +289,7 @@
                 <!-- Terms -->
                 <div style="flex: 1; min-width: 300px; background: #fff; border: 1px solid #ccd0d4; padding: 15px; border-radius: 4px;">
                     <h3><span class="dashicons dashicons-category"></span> Categorias e Termos</h3>
-                    <p><em>Identificador: URL, Slug ou ID do Termo.</em></p>
+                    <p><strong>Identificadores suportados:</strong> id, url, slug, identificador, site, nome, term_name</p>
                     <ul style="list-style-type: disc; margin-left: 20px;">
                         <li><strong>Alterar Nome do Termo:</strong> <code>term_name_update</code></li>
                         <li><strong>Descrição:</strong> <code>term_description</code>, <code>descricao</code></li>

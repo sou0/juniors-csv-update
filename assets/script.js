@@ -14,8 +14,8 @@ jQuery(document).ready(function ($) {
     const $stepService = $('#ycu-step-service');
     const $stepUpload = $('#ycu-step-upload');
     const $stepMapping = $('#ycu-step-mapping');
-    const $selectedServiceLabel = $('#ycu-selected-service-label');
-    const $btnChangeService = $('#ycu-btn-change-service');
+    const $selectedServiceLabel = $('.ycu-selected-service-label');
+    const $btnChangeService = $('.ycu-btn-change-service');
 
     let selectedService = '';
 
