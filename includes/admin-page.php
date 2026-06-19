@@ -22,7 +22,12 @@
                         <div class="ycu-card" data-service="posts">
                             <div class="ycu-card-icon"><span class="dashicons dashicons-admin-post"></span></div>
                             <h3>Posts, Páginas e CPTs</h3>
-                            <p>Atualize SEO (Titles/Desc), Categorias, Slugs e campos ACF de conteúdos textuais.</p>
+                            <p>Atualize SEO, Categorias, Slugs e campos ACF.</p>
+                        </div>
+                        <div class="ycu-card" data-service="conteudo">
+                            <div class="ycu-card-icon"><span class="dashicons dashicons-editor-paste-text"></span></div>
+                            <h3>Conteúdo (Páginas e Posts)</h3>
+                            <p>Substitua o conteúdo, atualize Títulos H1 ou troque H2 (por localização ou ordem). Funciona com Elementor.</p>
                         </div>
                         <div class="ycu-card" data-service="media">
                             <div class="ycu-card-icon"><span class="dashicons dashicons-admin-media"></span></div>
@@ -48,8 +53,67 @@
                         <input type="file" id="ycu-csv-file" name="ycu-csv-file" accept=".csv" required>
                         <div class="ycu-actions">
                             <button type="submit" class="button button-primary" id="ycu-btn-upload">Ler Arquivo e Continuar</button>
+                            <button type="button" class="button button-secondary" id="ycu-btn-bulk-replace" style="display:none;">Realizar o serviço em todos</button>
                         </div>
                     </form>
+                </div>
+
+                <!-- Step 2.5: Bulk Replace Setup -->
+                <div class="ycu-panel" id="ycu-step-bulk-replace" style="display: none;">
+                    <h2>Substituição em Massa (Sem CSV)</h2>
+                    <p class="ycu-help">Defina abaixo os textos que deseja substituir em todo o site. Não é necessário upload de arquivo.</p>
+                    
+                    <div id="ycu-bulk-replace-list">
+                        <div class="ycu-bulk-replace-row">
+                            <input type="text" class="ycu-bulk-old" placeholder="Texto original">
+                            <span>=</span>
+                            <input type="text" class="ycu-bulk-new" placeholder="Texto novo">
+                            <button type="button" class="ycu-btn-remove-replace">×</button>
+                        </div>
+                    </div>
+                    <button type="button" class="button" id="ycu-btn-add-replace" style="margin-top:10px;">+ Adicionar outra substituição</button>
+
+                    <div style="margin-top: 25px;">
+                        <h3>Onde realizar a substituição?</h3>
+                        <div class="ycu-checkbox-grid">
+                            <label><input type="checkbox" name="ycu_bulk_targets" value="p" checked> Conteúdos (&lt;p&gt;)</label><br>
+                            <label><input type="checkbox" name="ycu_bulk_targets" value="h1" checked> Títulos (&lt;h1&gt;)</label><br>
+                            <label><input type="checkbox" name="ycu_bulk_targets" value="h2" checked> Subtítulos (&lt;h2&gt;)</label><br>
+                            <label><input type="checkbox" name="ycu_bulk_targets" value="h3" checked> Subtítulos (&lt;h3&gt;)</label><br>
+                            <label><input type="checkbox" name="ycu_bulk_targets" value="h4"> Subtítulos (&lt;h4&gt;)</label><br>
+                            <label><input type="checkbox" name="ycu_bulk_targets" value="h5"> Subtítulos (&lt;h5&gt;)</label><br>
+                            <label><input type="checkbox" name="ycu_bulk_targets" value="h6"> Subtítulos (&lt;h6&gt;)</label><br>
+                            <label><input type="checkbox" name="ycu_bulk_targets" value="post_title"> Título do Post/Página</label>
+                            <label><input type="checkbox" name="ycu_bulk_targets" value="excerpt"> Resumo / Descrição</label>
+                            <label><input type="checkbox" name="ycu_bulk_targets" value="seo_title"> SEO Title</label>
+                            <label><input type="checkbox" name="ycu_bulk_targets" value="seo_desc"> SEO Description</label>
+                            <label><input type="checkbox" name="ycu_bulk_targets" value="acf"> Campos ACF</label>
+                            <label><input type="checkbox" name="ycu_bulk_targets" value="slug"> Slugs (URLs)</label>
+                            <label><input type="checkbox" name="ycu_bulk_targets" value="media_alt"> Alt Text (Imagens)</label>
+                        </div>
+                        <p class="ycu-help" style="margin-top:10px;">* As substituições em Parágrafos e Headings (H1 a H6) são compatíveis com o Elementor.</p>
+                    </div>
+
+                    <div style="margin-top: 25px;">
+                        <h3>Opções Avançadas</h3>
+                        <div class="ycu-checkbox-grid" style="grid-template-columns: 1fr;">
+                            <label><input type="checkbox" id="ycu_bulk_opt_case" value="1"> Ignorar Maiúsculas/Minúsculas (Ex: "Como" será igual a "como")</label>
+                            <label><input type="checkbox" id="ycu_bulk_opt_accents" value="1"> Ignorar Acentuação (Ex: "vovó" será igual a "vovo")</label>
+                            <label><input type="checkbox" id="ycu_bulk_opt_partial" value="1"> Substituir trechos dentro de palavras (Ex: trocar "grama" dentro da palavra "gramado")</label>
+                        </div>
+                    </div>
+
+                    <div class="ycu-actions" style="margin-top: 20px;">
+                        <button type="button" class="button button-secondary" id="ycu-btn-cancel-bulk">Voltar</button>
+                        <button type="button" class="button button-primary button-hero" id="ycu-btn-start-bulk">Iniciar Substituição em Massa</button>
+                    </div>
+
+                    <div id="ycu-bulk-progress-container" style="display: none;">
+                        <p style="margin-top:15px; margin-bottom:5px;"><strong>Progresso Total:</strong> <span id="ycu-bulk-progress-text">0%</span></p>
+                        <div class="ycu-progress-bar">
+                            <div id="ycu-bulk-progress-fill"></div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Step 3: Mapping -->
@@ -94,7 +158,6 @@
                     </div>
                 </div>
 
-                <!-- Step 3.5: Category Validation -->
                 <div class="ycu-panel ycu-validation-panel" id="ycu-step-validation" style="display: none;">
                     <h2>Confirmação de Categorias</h2>
                     <p class="ycu-help">Encontramos as seguintes categorias/termos na sua planilha. Verifique-as antes de iniciar a atualização em massa.</p>
@@ -104,8 +167,23 @@
                     </div>
 
                     <div class="ycu-actions" style="margin-top: 20px;">
-                        <button type="button" class="button button-secondary" id="ycu-btn-cancel-validation">Voltar ao Mapeamento</button>
-                        <button type="button" class="button button-primary button-hero" id="ycu-btn-confirm-validation">Confirmar e Iniciar Atualização</button>
+                        <button type="button" class="button button-secondary" id="ycu-btn-cancel-validation">Cancelar</button>
+                        <button type="button" class="button button-primary button-hero" id="ycu-btn-confirm-validation">Confirmar Categorias</button>
+                    </div>
+                </div>
+
+                <!-- Step 3.6: Author Validation -->
+                <div class="ycu-panel ycu-validation-panel" id="ycu-step-author-validation" style="display: none;">
+                    <h2>Confirmação de Autores</h2>
+                    <p class="ycu-help">Associe os nomes de autores da planilha a usuários existentes no seu WordPress. O sistema tentou identificar automaticamente.</p>
+                    
+                    <div id="ycu-author-validation-results" style="margin-top: 15px;">
+                        <!-- Author Validation results injected here -->
+                    </div>
+
+                    <div class="ycu-actions" style="margin-top: 20px;">
+                        <button type="button" class="button button-secondary" id="ycu-btn-cancel-author-validation">Cancelar</button>
+                        <button type="button" class="button button-primary button-hero" id="ycu-btn-confirm-author-validation">Confirmar Autores e Iniciar Atualização</button>
                     </div>
                 </div>
 
@@ -166,44 +244,67 @@
                 <!-- Posts/Pages -->
                 <div style="flex: 1; min-width: 300px; background: #fff; border: 1px solid #ccd0d4; padding: 15px; border-radius: 4px;">
                     <h3><span class="dashicons dashicons-admin-post"></span> Posts, Páginas e CPTs</h3>
-                    <p><em>Identificador obrigatório: URL, Slug ou ID do Post.</em></p>
+                    <p><em>Identificador: URL, Slug ou ID. (A coluna <code>title</code> também pode servir como identificador).</em></p>
                     <ul style="list-style-type: disc; margin-left: 20px;">
-                        <li><strong>SEO Title:</strong> Atualiza o título de SEO (Yoast ou Rank Math).</li>
-                        <li><strong>SEO Description:</strong> Atualiza a meta descrição de SEO.</li>
-                        <li><strong>Conteúdo do Post (Post Content):</strong> Sobrescreve o texto/HTML principal do post.</li>
-                        <li><strong>Resumo (Post Excerpt):</strong> Sobrescreve o resumo manual.</li>
-                        <li><strong>Alterar Slug (URL):</strong> Altera o link/slug de acesso.</li>
-                        <li><strong>Associar a Categorias/Taxonomia:</strong> Vincula o post a categorias ou tags. Exige confirmação de mapeamento para associar ou criar novos termos.</li>
-                        <li><strong>Campo ACF (Personalizado):</strong> Atualiza valores de campos avançados (exige o nome da key do ACF).</li>
+                        <li><strong>SEO Title:</strong> <code>seo_title</code>, <code>title</code></li>
+                        <li><strong>SEO Description:</strong> <code>seo_desc</code>, <code>description</code></li>
+                        <li><strong>Resumo (Excerpt):</strong> <code>post_excerpt</code>, <code>resumo</code></li>
+                        <li><strong>Alterar Slug:</strong> <code>slug_update</code></li>
+                        <li><strong>Categorias:</strong> <code>category</code>, <code>categorias</code></li>
+                        <li><strong>Autor:</strong> <code>author</code>, <code>autor</code></li>
+                        <li><strong>Campo ACF:</strong> <code>acf</code></li>
+                    </ul>
+                </div>
+
+                <!-- Conteúdo -->
+                <div style="flex: 1; min-width: 300px; background: #fff; border: 1px solid #ccd0d4; padding: 15px; border-radius: 4px;">
+                    <h3><span class="dashicons dashicons-editor-paste-text"></span> Conteúdo (Páginas e Posts)</h3>
+                    <p><em>Identificador: URL, Slug ou ID.</em></p>
+                    <ul style="list-style-type: disc; margin-left: 20px;">
+                        <li><strong>Substituição Global de Conteúdo:</strong> <code>post_content_original</code> + <code>post_content_update</code></li>
+                        <li><strong><code>allheading_original</code> e <code>allheading_update</code>:</strong> Substitui textos em todos os subtítulos (H2 a H6) da página de uma vez.</li>
+                        <li><strong><code>h1_original</code> e <code>h1_update</code>:</strong> Substitui o texto do título H1.</li>
+                        <li><strong><code>h2_original</code>, <code>h2_update</code> e <code>h2_order</code>:</strong> Idem para os subtítulos H2. (Ordem: 1, 2, 3...)</li>
+                        <li><strong><code>h3</code> a <code>h6</code>:</strong> Possuem o mesmo padrão <code>_original</code>, <code>_update</code> e <code>_order</code> de H2.</li>
                     </ul>
                 </div>
 
                 <!-- Media -->
                 <div style="flex: 1; min-width: 300px; background: #fff; border: 1px solid #ccd0d4; padding: 15px; border-radius: 4px;">
                     <h3><span class="dashicons dashicons-admin-media"></span> Mídias e Imagens</h3>
-                    <p><em>Identificador obrigatório: URL da imagem ou ID da Mídia.</em></p>
+                    <p><em>Identificador: URL da imagem ou ID.</em></p>
                     <ul style="list-style-type: disc; margin-left: 20px;">
-                        <li><strong>Texto Alternativo (Alt):</strong> Atualiza o texto alternativo da imagem.</li>
-                        <li><strong>Nome do Arquivo (Mídia) / Título:</strong> Altera o título de exibição interno da mídia na biblioteca.</li>
-                        <li><strong>Alterar Slug da Mídia:</strong> Altera a URL amigável da página de anexo da imagem.</li>
-                        <li><strong>Campo ACF (Personalizado):</strong> Atualiza campos ACF atrelados ao arquivo de mídia.</li>
+                        <li><strong>Alt Text:</strong> <code>alt_text</code>, <code>alt</code></li>
+                        <li><strong>Alterar Título da Mídia:</strong> <code>media_title_update</code></li>
+                        <li><strong>Legenda da Mídia (Caption):</strong> <code>media_caption</code>, <code>legenda</code></li>
+                        <li><strong>Descrição da Mídia (Description):</strong> <code>media_description</code>, <code>descricao</code></li>
+                        <li><strong>Campo ACF:</strong> <code>acf</code></li>
                     </ul>
                 </div>
 
                 <!-- Terms -->
                 <div style="flex: 1; min-width: 300px; background: #fff; border: 1px solid #ccd0d4; padding: 15px; border-radius: 4px;">
                     <h3><span class="dashicons dashicons-category"></span> Categorias e Termos</h3>
-                    <p><em>Identificador obrigatório: URL da Categoria, Slug ou ID do Termo.</em></p>
+                    <p><em>Identificador: URL, Slug ou ID do Termo.</em></p>
                     <ul style="list-style-type: disc; margin-left: 20px;">
-                        <li><strong>Nome do Termo/Categoria:</strong> Renomeia a categoria nativamente no WordPress.</li>
-                        <li><strong>Descrição do Termo/Categoria:</strong> Atualiza o campo nativo de descrição da categoria.</li>
-                        <li><strong>SEO Title de Termo:</strong> Título SEO da página da categoria.</li>
-                        <li><strong>SEO Description de Termo:</strong> Meta descrição SEO da página da categoria.</li>
-                        <li><strong>Alterar Slug (URL):</strong> Modifica o link da categoria.</li>
-                        <li><strong>Campo ACF (Personalizado):</strong> Atualiza campos ACF associados a esta taxonomia.</li>
+                        <li><strong>Alterar Nome do Termo:</strong> <code>term_name_update</code></li>
+                        <li><strong>Descrição:</strong> <code>term_description</code>, <code>descricao</code></li>
+                        <li><strong>SEO Title Termo:</strong> <code>seo_title</code></li>
+                        <li><strong>SEO Desc Termo:</strong> <code>seo_desc</code></li>
+                        <li><strong>Alterar Slug:</strong> <code>slug_update</code></li>
+                        <li><strong>Campo ACF:</strong> <code>acf</code></li>
                     </ul>
                 </div>
             </div>
+
+            <h3 style="margin-top: 30px;">Checklist de Funcionamento & Elementor</h3>
+            <ul style="list-style-type: check; margin-left: 20px;">
+                <li><input type="checkbox" checked readonly> <strong>Substituição de H1/H2:</strong> Funciona em conteúdo nativo e widgets de "Heading" do Elementor.</li>
+                <li><input type="checkbox" checked readonly> <strong>Parágrafos (&lt;p&gt;):</strong> Funciona em conteúdo nativo e widgets "Text Editor" do Elementor.</li>
+                <li><input type="checkbox" checked readonly> <strong>Bulk Replace (Em todos):</strong> Permite trocar múltiplos pares de texto de uma vez.</li>
+                <li><input type="checkbox" checked readonly> <strong>ACF:</strong> Atualiza valores em Posts e Termos (Categorias).</li>
+                <li><input type="checkbox" checked readonly> <strong>SEO:</strong> Compatível com Yoast SEO e Rank Math.</li>
+            </ul>
 
             <h3 style="margin-top: 30px;">Dicas Importantes</h3>
             <ul>

@@ -252,3 +252,54 @@
 .ycu-tab-content table.wp-list-table td {
     padding: 10px;
 }
+
+/* Bulk Replace Styles */
+.ycu-bulk-replace-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+.ycu-bulk-replace-row input {
+    flex: 1;
+}
+.ycu-btn-remove-replace {
+    background: #d63638;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    line-height: 20px;
+    text-align: center;
+}
+.ycu-btn-remove-replace:hover {
+    background: #b32d2e;
+}
+
+.ycu-checkbox-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+    background: #f0f0f1;
+    padding: 15px;
+    border-radius: 4px;
+}
+.ycu-checkbox-grid label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+}
+
+#ycu-bulk-progress-container {
+    margin-top: 20px;
+}
+
+#ycu-bulk-progress-fill {
+    height: 100%;
+    width: 0%;
+    background-color: #2271b1;
+    transition: width 0.3s;
+}
