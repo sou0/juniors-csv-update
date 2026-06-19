@@ -700,6 +700,8 @@ function ycu_revert_batch_handler() {
         } elseif ($field === 'media_title' && $obj_type === 'post') wp_update_post(array('ID' => $obj_id, 'post_title' => $old_val));
         elseif ($field === 'post_content' && $obj_type === 'post') wp_update_post(array('ID' => $obj_id, 'post_content' => $old_val));
         elseif ($field === 'post_excerpt' && $obj_type === 'post') wp_update_post(array('ID' => $obj_id, 'post_excerpt' => $old_val));
+        elseif ($field === 'media_caption' && $obj_type === 'post') wp_update_post(array('ID' => $obj_id, 'post_excerpt' => $old_val));
+        elseif ($field === 'media_description' && $obj_type === 'post') wp_update_post(array('ID' => $obj_id, 'post_content' => $old_val));
         elseif ($field === 'term_name' && $obj_type === 'term') wp_update_term($obj_id, get_term($obj_id)->taxonomy, array('name' => $old_val));
         elseif ($field === 'term_description' && $obj_type === 'term') wp_update_term($obj_id, get_term($obj_id)->taxonomy, array('description' => $old_val));
         elseif (strpos($field, 'category_') === 0) {
