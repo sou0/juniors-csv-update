@@ -392,11 +392,12 @@ function ycu_bulk_replace_handler() {
 
         // SEO Term
         if (in_array('seo_title', $targets) || in_array('seo_desc', $targets)) {
-            $seo_keys = array();
-            if (in_array('seo_title', $targets)) $seo_keys = array_merge($seo_keys, array('wpseo_title', 'rank_math_title'));
-            if (in_array('seo_desc', $targets)) $seo_keys = array_merge($seo_keys, array('wpseo_desc', 'rank_math_description'));
+            // Rank Math
+            $rm_keys = array();
+            if (in_array('seo_title', $targets)) $rm_keys[] = 'rank_math_title';
+            if (in_array('seo_desc', $targets)) $rm_keys[] = 'rank_math_description';
 
-            foreach ($seo_keys as $key) {
+            foreach ($rm_keys as $key) {
                 $old_v = get_term_meta($term_id, $key, true);
                 if (!$old_v) continue;
                 $new_v = ycu_safe_html_replace($replacements, $old_v);
@@ -404,6 +405,30 @@ function ycu_bulk_replace_handler() {
                     ycu_save_log($batch_id, 'term', $term_id, $key, $old_v, $new_v);
                     update_term_meta($term_id, $key, $new_v);
                     $changed = true;
+                }
+            }
+            
+            // Yoast SEO
+            $tax_meta = get_option('wpseo_taxonomy_meta', array());
+            if (!is_array($tax_meta)) $tax_meta = array();
+            $tax = $term->taxonomy;
+            if (isset($tax_meta[$tax][$term_id])) {
+                $yoast_keys = array();
+                if (in_array('seo_title', $targets)) $yoast_keys[] = 'wpseo_title';
+                if (in_array('seo_desc', $targets)) $yoast_keys[] = 'wpseo_desc';
+                
+                foreach ($yoast_keys as $yk) {
+                    if (isset($tax_meta[$tax][$term_id][$yk])) {
+                        $old_v = $tax_meta[$tax][$term_id][$yk];
+                        $new_v = ycu_safe_html_replace($replacements, $old_v);
+                        if ($new_v !== $old_v) {
+                            $tax_meta[$tax][$term_id][$yk] = $new_v;
+                            ycu_save_log($batch_id, 'term', $term_id, 'yoast_' . $yk, $old_v, $new_v);
+                            update_option('wpseo_taxonomy_meta', $tax_meta);
+                            global $wpdb; $wpdb->delete($wpdb->prefix . 'yoast_indexable', array('object_id' => $term_id, 'object_type' => 'term'));
+                            $changed = true;
+                        }
+                    }
                 }
             }
         }
@@ -704,6 +729,18 @@ function ycu_revert_batch_handler() {
         elseif ($field === 'media_description' && $obj_type === 'post') wp_update_post(array('ID' => $obj_id, 'post_content' => $old_val));
         elseif ($field === 'term_name' && $obj_type === 'term') wp_update_term($obj_id, get_term($obj_id)->taxonomy, array('name' => $old_val));
         elseif ($field === 'term_description' && $obj_type === 'term') wp_update_term($obj_id, get_term($obj_id)->taxonomy, array('description' => $old_val));
+        elseif (strpos($field, 'yoast_wpseo_') === 0 && $obj_type === 'term') {
+            $yoast_key = str_replace('yoast_', '', $field);
+            $tax = get_term($obj_id)->taxonomy;
+            $tax_meta = get_option('wpseo_taxonomy_meta', array());
+            if (!is_array($tax_meta)) $tax_meta = array();
+            if (!isset($tax_meta[$tax])) $tax_meta[$tax] = array();
+            if (!isset($tax_meta[$tax][$obj_id])) $tax_meta[$tax][$obj_id] = array();
+            if (empty($old_val)) unset($tax_meta[$tax][$obj_id][$yoast_key]);
+            else $tax_meta[$tax][$obj_id][$yoast_key] = $old_val;
+            update_option('wpseo_taxonomy_meta', $tax_meta);
+            global $wpdb; $wpdb->delete($wpdb->prefix . 'yoast_indexable', array('object_id' => $obj_id, 'object_type' => 'term'));
+        }
         elseif (strpos($field, 'category_') === 0) {
             $tax = str_replace('category_', '', $field);
             $term_ids = empty($old_val) ? array() : explode(',', $old_val);
@@ -837,7 +874,19 @@ function ycu_process_row_handler() {
                 if ($seo_plugin === 'both' || $seo_plugin === 'rankmath') { $meta_key = $is_title ? 'rank_math_title' : 'rank_math_description'; $old = get_post_meta($obj['id'], $meta_key, true); ycu_save_log($batch_id, 'post', $obj['id'], $meta_key, $old, $val); update_post_meta($obj['id'], $meta_key, $val); }
                 $updated[] = $is_title ? 'SEO Title' : 'SEO Desc';
             } elseif ($obj['type'] === 'term') {
-                if ($seo_plugin === 'both' || $seo_plugin === 'yoast') { $meta_key = $is_title ? 'wpseo_title' : 'wpseo_desc'; $old = get_term_meta($obj['id'], $meta_key, true); ycu_save_log($batch_id, 'term', $obj['id'], $meta_key, $old, $val); update_term_meta($obj['id'], $meta_key, $val); }
+                if ($seo_plugin === 'both' || $seo_plugin === 'yoast') {
+                    $yoast_key = $is_title ? 'wpseo_title' : 'wpseo_desc';
+                    $tax = get_term($obj['id'])->taxonomy;
+                    $tax_meta = get_option('wpseo_taxonomy_meta', array());
+                    if (!is_array($tax_meta)) $tax_meta = array();
+                    $old = isset($tax_meta[$tax][$obj['id']][$yoast_key]) ? $tax_meta[$tax][$obj['id']][$yoast_key] : '';
+                    if (!isset($tax_meta[$tax])) $tax_meta[$tax] = array();
+                    if (!isset($tax_meta[$tax][$obj['id']])) $tax_meta[$tax][$obj['id']] = array();
+                    $tax_meta[$tax][$obj['id']][$yoast_key] = $val;
+                    ycu_save_log($batch_id, 'term', $obj['id'], 'yoast_' . $yoast_key, $old, $val);
+                    update_option('wpseo_taxonomy_meta', $tax_meta);
+                    global $wpdb; $wpdb->delete($wpdb->prefix . 'yoast_indexable', array('object_id' => $obj['id'], 'object_type' => 'term'));
+                }
                 if ($seo_plugin === 'both' || $seo_plugin === 'rankmath') { $meta_key = $is_title ? 'rank_math_title' : 'rank_math_description'; $old = get_term_meta($obj['id'], $meta_key, true); ycu_save_log($batch_id, 'term', $obj['id'], $meta_key, $old, $val); update_term_meta($obj['id'], $meta_key, $val); }
                 $updated[] = $is_title ? 'SEO Title (Term)' : 'SEO Desc (Term)';
             } elseif ($obj['type'] === 'home_posts') {
